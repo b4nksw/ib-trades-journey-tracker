@@ -46,8 +46,16 @@ def compute_positions(conn: sqlite3.Connection, ib_positions: dict[str, dict]) -
         ib_avg_cost = ib.get("ib_avg_cost")
         market_value = ib.get("market_value")
 
-        unrealized_pnl_ib = (market_value - ib_avg_cost * qty) if (market_value and ib_avg_cost and qty > 0) else None
-        unrealized_pnl_adj = (market_value - adj_avg * qty) if (market_value and qty > 0) else None
+        unrealized_pnl_ib = (
+            (market_value - ib_avg_cost * qty)
+            if (market_value is not None and ib_avg_cost is not None and qty > 0)
+            else None
+        )
+        unrealized_pnl_adj = (
+            (market_value - adj_avg * qty)
+            if (market_value is not None and qty > 0)
+            else None
+        )
 
         upsert_position(conn, {
             "symbol": symbol, "quantity": qty,
@@ -74,7 +82,8 @@ def compute_portfolio_snapshot(conn: sqlite3.Connection, account_data: dict) -> 
     investment_ratio = invested_value / total_nav if total_nav > 0 else 0.0
     cash_ratio = cash_balance / total_nav if total_nav > 0 else 0.0
 
-    largest = max(positions, key=lambda p: p["market_value"] or 0.0, default=None)
+    valued_positions = [p for p in positions if p["market_value"] is not None]
+    largest = max(valued_positions, key=lambda p: p["market_value"], default=None)
 
     insert_portfolio_snapshot(conn, {
         "snapshot_date": today,
