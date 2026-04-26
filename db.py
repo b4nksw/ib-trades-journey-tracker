@@ -17,11 +17,12 @@ CREATE TABLE IF NOT EXISTS executions (
     ib_exec_id  TEXT UNIQUE NOT NULL
 );
 CREATE TABLE IF NOT EXISTS dividends (
-    id      INTEGER PRIMARY KEY AUTOINCREMENT,
-    symbol  TEXT NOT NULL,
-    amount  REAL NOT NULL,
-    ex_date DATE NOT NULL,
-    pay_date DATE
+    id       INTEGER PRIMARY KEY AUTOINCREMENT,
+    symbol   TEXT NOT NULL,
+    amount   REAL NOT NULL,
+    ex_date  DATE NOT NULL,
+    pay_date DATE,
+    UNIQUE(symbol, ex_date)
 );
 CREATE TABLE IF NOT EXISTS positions (
     symbol              TEXT PRIMARY KEY,
@@ -84,7 +85,6 @@ def set_last_sync(conn: sqlite3.Connection, data_type: str, dt: datetime) -> Non
         "ON CONFLICT(data_type) DO UPDATE SET last_synced_at = excluded.last_synced_at",
         (data_type, dt.isoformat()),
     )
-    conn.commit()
 
 
 def insert_execution(conn: sqlite3.Connection, exec_dict: dict) -> None:

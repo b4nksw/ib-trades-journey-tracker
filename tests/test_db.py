@@ -70,6 +70,7 @@ def test_sync_log(conn):
     assert get_last_sync(conn, "executions") is None
     now = datetime.now(timezone.utc)
     set_last_sync(conn, "executions", now)
+    conn.commit()  # add this line
     result = get_last_sync(conn, "executions")
     assert abs((result - now).total_seconds()) < 1
 
