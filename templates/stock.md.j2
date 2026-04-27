@@ -6,7 +6,7 @@ Last updated: {{ last_updated }}
 
 | Metric | Value |
 |---|---|
-| Current Shares | {{ quantity | int }} |
+| Current Shares | {{ quantity }} |
 | IB Avg Cost | {{ ib_avg_cost | currency }} |
 | Adjusted Avg Cost | {{ adj_avg_cost | currency }} |
 | Break-even Price | {{ adj_avg_cost | currency }} |
@@ -20,7 +20,7 @@ Last updated: {{ last_updated }}
 | Date | Action | Qty | Price | Commission | Adj Avg After |
 |---|---|---|---|---|---|
 {% for trade in trades -%}
-| {{ trade.executed_at[:10] }} | {{ trade.action }} | {{ trade.quantity | int }} | {{ trade.price | currency }} | {{ trade.commission | currency }} | {{ trade.adj_avg_after | currency }} |
+| {{ trade.executed_at[:10] }} | {{ trade.action }} | {{ trade.quantity }} | {{ trade.price | currency }} | {{ trade.commission | currency }} | {{ trade.adj_avg_after | currency }} |
 {% endfor %}
 {% if dividends %}
 ## Dividends

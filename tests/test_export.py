@@ -46,7 +46,15 @@ def test_stock_journal_shows_adj_avg_after_each_trade(conn, tmp_path):
     env = build_env(TEMPLATES)
     export_stock_journal(conn, "TSLA", env, tmp_path / "journal")
     content = (tmp_path / "journal" / "TSLA.md").read_text()
-    assert "$2.50" in content    # adj avg after SELL
+    assert "| 2024-01-15 | BUY | 5.0 | $10.00 | $1.00 | $10.00 |" in content
+    assert "| 2024-06-20 | SELL | 3.0 | $15.00 | $1.00 | $2.50 |" in content
+
+
+def test_pnl_filter_negative_value():
+    from export import _pnl
+    assert _pnl(-5.0) == "-$5.00"
+    assert _pnl(15.0) == "+$15.00"
+    assert _pnl(None) == "N/A"
 
 
 def test_portfolio_summary_shows_health(conn, tmp_path):

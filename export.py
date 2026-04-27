@@ -18,8 +18,8 @@ def _currency(value) -> str:
 def _pnl(value) -> str:
     if value is None:
         return "N/A"
-    sign = "+" if value >= 0 else ""
-    return f"{sign}${value:,.2f}"
+    sign = "+" if value >= 0 else "-"
+    return f"{sign}${abs(value):,.2f}"
 
 
 def build_env(templates_dir: Path = TEMPLATES_DIR) -> Environment:

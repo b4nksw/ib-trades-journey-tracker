@@ -16,7 +16,7 @@ Last updated: {{ last_updated }}
 | Symbol | Shares | IB Avg | Adj Avg | Market Value | Unreal P&L (Adj) | Realized P&L |
 |---|---|---|---|---|---|---|
 {% for pos in positions -%}
-| {{ pos.symbol }} | {{ pos.quantity | int }} | {{ pos.ib_avg_cost | currency }} | {{ pos.adj_avg_cost | currency }} | {{ pos.market_value | currency }} | {{ pos.unrealized_pnl_adj | pnl }} | {{ pos.realized_pnl | pnl }} |
+| {{ pos.symbol }} | {{ pos.quantity }} | {{ pos.ib_avg_cost | currency }} | {{ pos.adj_avg_cost | currency }} | {{ pos.market_value | currency }} | {{ pos.unrealized_pnl_adj | pnl }} | {{ pos.realized_pnl | pnl }} |
 {% endfor %}
 {% if largest_symbol %}
 ## Largest Position
