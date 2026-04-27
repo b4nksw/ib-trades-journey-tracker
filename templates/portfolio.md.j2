@@ -1,0 +1,24 @@
+# Portfolio Summary
+
+Last updated: {{ last_updated }}
+
+## Health
+
+| Metric | Value | Target |
+|---|---|---|
+| Net Asset Value | {{ total_nav | currency }} | — |
+| Invested | {{ invested_value | currency }} ({{ (investment_ratio * 100) | round(1) }}%) | 70% |
+| Cash | {{ cash_balance | currency }} ({{ (cash_ratio * 100) | round(1) }}%) | 30% |
+| Status | {{ health_status }} | — |
+
+## Positions
+
+| Symbol | Shares | IB Avg | Adj Avg | Market Value | Unreal P&L (Adj) | Realized P&L |
+|---|---|---|---|---|---|---|
+{% for pos in positions -%}
+| {{ pos.symbol }} | {{ pos.quantity | int }} | {{ pos.ib_avg_cost | currency }} | {{ pos.adj_avg_cost | currency }} | {{ pos.market_value | currency }} | {{ pos.unrealized_pnl_adj | pnl }} | {{ pos.realized_pnl | pnl }} |
+{% endfor %}
+{% if largest_symbol %}
+## Largest Position
+{{ largest_symbol }} — {{ largest_value | currency }} ({{ largest_pct | round(1) }}% of invested)
+{% endif %}

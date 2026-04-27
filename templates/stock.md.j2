@@ -1,0 +1,33 @@
+# {{ symbol }}
+
+Last updated: {{ last_updated }}
+
+## Position Summary
+
+| Metric | Value |
+|---|---|
+| Current Shares | {{ quantity | int }} |
+| IB Avg Cost | {{ ib_avg_cost | currency }} |
+| Adjusted Avg Cost | {{ adj_avg_cost | currency }} |
+| Break-even Price | {{ adj_avg_cost | currency }} |
+| Market Value | {{ market_value | currency }} |
+| Unrealized P&L (IB basis) | {{ unrealized_pnl_ib | pnl }} |
+| Unrealized P&L (Adj basis) | {{ unrealized_pnl_adj | pnl }} |
+| Total Realized P&L | {{ realized_pnl | pnl }} |
+
+## Trade History
+
+| Date | Action | Qty | Price | Commission | Adj Avg After |
+|---|---|---|---|---|---|
+{% for trade in trades -%}
+| {{ trade.executed_at[:10] }} | {{ trade.action }} | {{ trade.quantity | int }} | {{ trade.price | currency }} | {{ trade.commission | currency }} | {{ trade.adj_avg_after | currency }} |
+{% endfor %}
+{% if dividends %}
+## Dividends
+
+| Ex-Date | Pay Date | Amount |
+|---|---|---|
+{% for div in dividends -%}
+| {{ div.ex_date }} | {{ div.pay_date or '—' }} | {{ div.amount | currency }} |
+{% endfor %}
+{% endif %}
