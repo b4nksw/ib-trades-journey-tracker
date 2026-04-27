@@ -158,7 +158,56 @@ tail -f logs/sync.log
 
 ## Backfilling missed days
 
-If the service was down and you missed several trading days, temporarily switch your Flex Query's date range to **Last N Calendar Days** (e.g. 7) in IB Portal, then re-run manually. The DB insert is idempotent (`INSERT OR IGNORE` on `ib_exec_id`), so re-importing existing trades is safe. Switch the date range back to **Last Business Day** afterwards.
+**Missed a few days** — temporarily switch your Flex Query to **Last N Calendar Days** (e.g. 7), re-run manually, then switch back to **Last Business Day**.
+
+**Trades older than 365 days** — IB Flex Query caps history at 365 days. For older trades, look them up in IB Portal under **Reports → Statements → Activity Statement** (no cap) and enter them manually using `manage.py` (see below).
+
+---
+
+## Managing trades manually
+
+IB Flex Query only goes back 365 days. For older trades that fall outside that window, use `manage.py` to add them directly to the DB. All three commands require the venv to be active.
+
+### Add a historical trade
+
+```bash
+python manage.py add-trade SYMBOL BUY|SELL QTY PRICE DATE [--commission N]
+```
+
+```bash
+# Examples
+python manage.py add-trade SYMBOL BUY 10 100.00 2022-06-01
+python manage.py add-trade SYMBOL BUY 5 200.00 2022-09-15 --commission 1.00
+```
+
+After adding, run `python main.py` to recompute positions and regenerate journals.
+
+### List trades for a symbol
+
+Shows all trades in the DB for a symbol, with a `manual` / `flex` label so you can tell them apart.
+
+```bash
+python manage.py list-trades SYMBOL
+```
+
+```
+ID      Date          Action       Qty       Price  Commission  Source
+---------------------------------------------------------------------------
+12      2022-06-01    BUY        10.00  $   100.00  $     1.00  manual
+84      2024-03-15    SELL        4.00  $   120.00  $     1.00  flex
+...
+Net qty: 6.00  (bought 10.00, sold 4.00)
+```
+
+### Delete a trade
+
+Use the `ID` shown by `list-trades`. Prompts for confirmation before deleting.
+
+```bash
+python manage.py delete-trade ID
+```
+
+After deleting, run `python main.py` to recompute.
 
 ---
 
@@ -186,7 +235,7 @@ logs/sync.log    # appended on every run; rotated manually if needed
 A healthy run ends with a line like:
 
 ```
-2026-04-27 17:00:12 INFO Done. Portfolio: 72.3% invested.
+2025-01-01 17:00:12 INFO Done. Portfolio: 72.3% invested.
 ```
 
 ---
@@ -196,6 +245,7 @@ A healthy run ends with a line like:
 ```
 .
 ├── main.py          # entry point: orchestrates import → compute → export
+├── manage.py        # CLI for manually adding/listing/deleting trades
 ├── config.py        # loads settings from .env via python-dotenv
 ├── flex_import.py   # Flex Query API client + XML parser
 ├── sync.py          # IB Gateway connection (live positions + account summary)
