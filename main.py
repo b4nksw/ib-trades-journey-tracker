@@ -9,17 +9,16 @@ from export import export_all
 import config
 
 LOG_DIR = Path(__file__).parent / "logs"
-
-logging.basicConfig(
-    filename=LOG_DIR / "sync.log",
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(message)s",
-)
 logger = logging.getLogger(__name__)
 
 
 def run() -> None:
     LOG_DIR.mkdir(exist_ok=True)
+    logging.basicConfig(
+        filename=LOG_DIR / "sync.log",
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+    )
 
     if not config.FLEX_TOKEN or not config.FLEX_QUERY_ID:
         logger.error("FLEX_TOKEN and FLEX_QUERY_ID must be set in config.py")
