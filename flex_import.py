@@ -24,10 +24,13 @@ def fetch_flex_xml(token: str, query_id: str) -> str:
         resp2.raise_for_status()
         try:
             r2_root = ET.fromstring(resp2.text)
-            if r2_root.findtext("Status") != "Fail":
+            if r2_root.findtext("Status") == "Success":
                 return resp2.text
+            # Status=Warn means report still generating; Status=Fail is fatal
+            if r2_root.findtext("Status") == "Fail":
+                raise RuntimeError(f"Flex report failed: {resp2.text[:200]}")
         except ET.ParseError:
-            return resp2.text  # not an error XML, likely valid trade data
+            return resp2.text  # not a status XML — treat as valid trade data
         time.sleep(5)
     raise RuntimeError(f"Flex report not ready after retries: {resp2.text[:200]}")
 

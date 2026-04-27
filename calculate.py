@@ -20,7 +20,10 @@ def compute_adj_avg(executions: list[dict]) -> tuple[float, float, float]:
     for ex in sorted(executions, key=lambda x: x["executed_at"]):
         if ex["action"] == "BUY":
             new_qty = qty + ex["quantity"]
-            adj_avg = (qty * adj_avg + ex["quantity"] * ex["price"]) / new_qty
+            adj_avg = (
+                (qty * adj_avg + ex["quantity"] * ex["price"]) / new_qty
+                if new_qty != 0 else 0.0
+            )
             qty = new_qty
         elif ex["action"] == "SELL":
             realized_pnl += (ex["price"] - adj_avg) * ex["quantity"]
