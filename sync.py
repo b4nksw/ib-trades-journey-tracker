@@ -18,16 +18,29 @@ def fetch_positions(ib: IB, conn: sqlite3.Connection) -> dict[str, dict]:
     """
     Fetches current portfolio from IB Gateway.
     Returns {symbol: {"ib_avg_cost": float, "market_value": float}}.
-    ib.portfolio() returns PortfolioItem objects: contract, position, marketPrice,
-    marketValue, averageCost, unrealizedPNL, realizedPNL, account.
+
+    ib_insync calls reqPositions() automatically on connect, so ib.positions()
+    is already populated after the initial sleep — use it for avg cost.
+    Market values require reqAccountUpdates(), which pushes updatePortfolio events.
     """
     result = {}
-    for item in ib.portfolio():
-        symbol = item.contract.symbol
-        result[symbol] = {
-            "ib_avg_cost": item.averageCost,
-            "market_value": item.marketValue,
-        }
+
+    # avg cost: available immediately from the auto-requested positions
+    for pos in ib.positions():
+        symbol = pos.contract.symbol
+        result[symbol] = {"ib_avg_cost": pos.avgCost, "market_value": None}
+
+    # market value: request account updates and wait for portfolio push
+    accounts = ib.managedAccounts()
+    if accounts:
+        ib.reqAccountUpdates(accounts[0])  # ib_insync handles the subscribe=True internally
+        ib.sleep(5)
+        for item in ib.portfolio():
+            symbol = item.contract.symbol
+            if symbol in result:
+                result[symbol]["market_value"] = item.marketValue
+            else:
+                result[symbol] = {"ib_avg_cost": item.averageCost, "market_value": item.marketValue}
 
     set_last_sync(conn, "positions", datetime.now(timezone.utc))
     conn.commit()
