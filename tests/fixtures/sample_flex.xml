@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FlexQueryResponse queryName="IB Tracker" type="AF">
+  <FlexStatements count="1">
+    <FlexStatement accountId="U1234567" fromDate="2000-01-01" toDate="2026-04-26">
+      <Trades>
+        <Trade symbol="TSLA" buySell="BUY" quantity="5" tradePrice="10.00"
+               ibCommission="-1.00" dateTime="20240115;100000"
+               tradeID="111" exchange="NASDAQ" currency="USD" />
+        <Trade symbol="TSLA" buySell="SELL" quantity="3" tradePrice="15.00"
+               ibCommission="-1.00" dateTime="20240620;140000"
+               tradeID="222" exchange="NASDAQ" currency="USD" />
+        <Trade symbol="AAPL" buySell="BUY" quantity="10" tradePrice="150.00"
+               ibCommission="-1.00" dateTime="20240201;110000"
+               tradeID="333" exchange="NASDAQ" currency="USD" />
+      </Trades>
+      <CashTransactions>
+        <CashTransaction symbol="TSLA" type="Dividends" amount="2.50"
+                         dateTime="20240301;093000" settleDate="20240315" />
+      </CashTransactions>
+    </FlexStatement>
+  </FlexStatements>
+</FlexQueryResponse>
