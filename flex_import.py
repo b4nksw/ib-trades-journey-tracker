@@ -18,11 +18,18 @@ def fetch_flex_xml(token: str, query_id: str) -> str:
     if not ref_code:
         raise RuntimeError(f"Flex Query request failed: {resp.text[:200]}")
 
-    time.sleep(3)  # IB needs time to generate the report
-
-    resp2 = requests.get(_GET_URL, params={"t": token, "q": ref_code, "v": 3}, timeout=60)
-    resp2.raise_for_status()
-    return resp2.text
+    time.sleep(3)  # initial wait for IB to generate the report
+    for attempt in range(5):
+        resp2 = requests.get(_GET_URL, params={"t": token, "q": ref_code, "v": 3}, timeout=60)
+        resp2.raise_for_status()
+        try:
+            r2_root = ET.fromstring(resp2.text)
+            if r2_root.findtext("Status") != "Fail":
+                return resp2.text
+        except ET.ParseError:
+            return resp2.text  # not an error XML, likely valid trade data
+        time.sleep(5)
+    raise RuntimeError(f"Flex report not ready after retries: {resp2.text[:200]}")
 
 
 def parse_flex_xml(xml_text: str) -> tuple[list[dict], list[dict]]:
@@ -30,13 +37,25 @@ def parse_flex_xml(xml_text: str) -> tuple[list[dict], list[dict]]:
     Parses Flex Query XML into (trades, dividends) lists.
     Handles IB's dateTime format: '20240115;100000' -> '2024-01-15T10:00:00'
     """
-    root = ET.fromstring(xml_text)
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError as e:
+        raise RuntimeError(f"Flex XML parse failed: {e} — received: {xml_text[:200]!r}") from e
     trades = []
     dividends = []
 
     for trade in root.iter("Trade"):
         raw_dt = trade.get("dateTime", "")
-        action = "BUY" if trade.get("buySell", "").upper() == "BUY" else "SELL"
+        buy_sell = trade.get("buySell", "").upper()
+        if buy_sell in ("BUY", "BUY TO COVER"):
+            action = "BUY"
+        elif buy_sell in ("SELL", "SELL SHORT"):
+            action = "SELL"
+        else:
+            raise ValueError(f"Unrecognised buySell value: {buy_sell!r}")
+        exec_id = trade.get("tradeID", "").strip()
+        if not exec_id:
+            continue
         commission_raw = trade.get("ibCommission", "0")
         trades.append({
             "symbol": trade.get("symbol", "").split()[0],
@@ -46,7 +65,7 @@ def parse_flex_xml(xml_text: str) -> tuple[list[dict], list[dict]]:
             "commission": abs(float(commission_raw)),
             "executed_at": _parse_ib_datetime(raw_dt),
             "exchange": trade.get("exchange", ""),
-            "ib_exec_id": trade.get("tradeID", ""),
+            "ib_exec_id": exec_id,
         })
 
     for ct in root.iter("CashTransaction"):
@@ -73,15 +92,12 @@ def import_flex_data(conn: sqlite3.Connection, xml_text: str) -> tuple[int, int]
     trades, dividends = parse_flex_xml(xml_text)
 
     before_t = conn.execute("SELECT count(*) FROM executions").fetchone()[0]
+    before_d = conn.execute("SELECT count(*) FROM dividends").fetchone()[0]
     for t in trades:
         insert_execution(conn, t)
-
-    before_d = conn.execute("SELECT count(*) FROM dividends").fetchone()[0]
     for d in dividends:
         insert_dividend(conn, d)
-
     conn.commit()
-
     after_t = conn.execute("SELECT count(*) FROM executions").fetchone()[0]
     after_d = conn.execute("SELECT count(*) FROM dividends").fetchone()[0]
     return after_t - before_t, after_d - before_d
@@ -89,6 +105,8 @@ def import_flex_data(conn: sqlite3.Connection, xml_text: str) -> tuple[int, int]
 
 def _parse_ib_datetime(raw: str) -> str:
     """'20240115;100000' -> '2024-01-15T10:00:00'"""
+    if not raw:
+        raise ValueError("Missing or empty dateTime in Flex XML")
     raw = raw.replace(";", "").replace(" ", "")
     if len(raw) >= 14:
         return f"{raw[0:4]}-{raw[4:6]}-{raw[6:8]}T{raw[8:10]}:{raw[10:12]}:{raw[12:14]}"
