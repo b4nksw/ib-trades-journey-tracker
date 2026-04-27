@@ -8,7 +8,7 @@
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>/Users/benksw/Developer/Personal/playground/interactive-broker/run.sh</string>
+        <string>/path/to/ib-trades-journey-tracker/run.sh</string>
     </array>
     <key>StartCalendarInterval</key>
     <array>
@@ -19,6 +19,6 @@
         <dict><key>Weekday</key><integer>5</integer><key>Hour</key><integer>17</integer><key>Minute</key><integer>0</integer></dict>
     </array>
     <key>WorkingDirectory</key>
-    <string>/Users/benksw/Developer/Personal/playground/interactive-broker</string>
+    <string>/path/to/ib-trades-journey-tracker</string>
 </dict>
 </plist>
