@@ -63,7 +63,7 @@ def parse_flex_xml(xml_text: str) -> tuple[list[dict], list[dict]]:
         trades.append({
             "symbol": trade.get("symbol", "").split()[0],
             "action": action,
-            "quantity": float(trade.get("quantity", 0)),
+            "quantity": abs(float(trade.get("quantity", 0))),
             "price": float(trade.get("tradePrice", 0)),
             "commission": abs(float(commission_raw)),
             "executed_at": _parse_ib_datetime(raw_dt),
